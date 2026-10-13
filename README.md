@@ -1,115 +1,763 @@
-# web-programming-2026-template
+# 🎣 «Клювання» — інтернет-магазин риболовних товарів
 
-A reusable Django project with no bundled application, SQLite, and Django's
-standard admin, authentication, sessions, messages, and staticfiles support.
+REST API серверної частини інтернет-магазину спорядження для риболовлі.
 
-## Local setup
+## Зміст
 
-Requires the latest patch release of Python 3.12, 3.13, or 3.14. Run these commands from the project directory containing
-`manage.py`.
+1. [Тема сайту](#1-тема-сайту)
+2. [Загальні правила API](#2-загальні-правила-api)
+3. [Ресурси та моделі даних](#3-ресурси-та-моделі-даних)
+4. [Автентифікація та користувачі](#4-автентифікація-та-користувачі)
+5. [Товари](#5-товари)
+6. [Категорії](#6-категорії)
+7. [Бренди](#7-бренди)
+8. [Кошик](#8-кошик)
+9. [Замовлення](#9-замовлення)
+10. [Інформація про магазин](#10-інформація-про-магазин)
+11. [Зведена таблиця ендпоінтів](#11-зведена-таблиця-ендпоінтів)
 
-1. Create and activate a virtual environment:
+---
 
-   ```bash
-   python -m venv .venv
-   
-   # for linux/macos
-   source .venv/bin/activate
-   # for Windows:
-   .venv\Scripts\activate
-   ```
+## 1. Тема сайту
 
-2. Install dependencies:
+### Напрям
 
-   ```bash
-   python -m pip install -r requirements-dev.txt
-   ```
+«Клювання» — це онлайн-магазин, у якому рибалки можуть підібрати й купити все потрібне для риболовлі: вудилища, котушки, волосінь, приманки, гачки, ящики, одяг і туристичне спорядження. Магазин розрахований і на новачків, які купують перший комплект, і на досвідчених рибалок, яким потрібна конкретна модель конкретного виробника.
 
+### Що робить сайт
 
-3. Apply migrations to create the local SQLite database:
+- Показує каталог товарів з фото, ціною та наявністю.
+- Допомагає швидко знайти потрібне: пошук за назвою чи виробником, відбір за категорією, виробником, ціною та наявністю.
+- Впорядковує товари: від дешевших, від дорожчих, за популярністю, за назвою, за категорією, спочатку новинки.
+- Розповідає про кожен товар детально: опис, характеристики (довжина, тест, вага, матеріал тощо), артикул, виробник, залишок.
+- Дозволяє переглядати товари за категоріями та за виробниками (брендами), з короткою інформацією про кожен бренд.
+- Дає покупцю особистий кабінет: дані про себе, історія покупок.
+- Дає змогу зібрати кошик і оформити замовлення однією кнопкою «Купити» (без введення адреси та оплати — спрощена модель).
+- Містить сторінку «Про нас» з контактами, умовами доставки та повернення.
 
-   ```bash
-   python manage.py migrate
-   ```
+### Хто користується сайтом
 
-4. Start the development server:
-
-   ```bash
-   python manage.py runserver
-   ```
-
-## Endpoints
-
-With the server running at `http://127.0.0.1:8000`:
-
-| URL | Behavior |
+| Хто | Що може робити |
 | --- | --- |
-| http://127.0.0.1:8000/ | No application homepage; may show Django's development welcome page while `DEBUG = True` |
-| http://127.0.0.1:8000/admin/ | Django admin, available after applying migrations |
+| **Відвідувач** (без входу) | Переглядати каталог, шукати та відбирати товари, дивитись категорії, бренди, сторінку «Про нас», зареєструватись або увійти |
+| **Покупець** (після входу) | Усе, що відвідувач, а також: вести особистий кабінет, наповнювати кошик, купувати, переглядати свої замовлення |
+| **Адміністратор магазину** | Усе, що покупець, а також: додавати, змінювати й прибирати товари, категорії та бренди; змінювати стан замовлень |
 
-With `DEBUG = False`, unmatched URLs such as `/` return HTTP 404.
+### Сторінки сайту
 
-To create an account for admin login, run this after applying migrations:
+| Сторінка | Що на ній |
+| --- | --- |
+| Каталог | Перелік товарів, рядок пошуку, фільтри, вибір порядку сортування, перемикання сторінок |
+| Сторінка товару | Фото, назва, ціна, наявність, опис, характеристики, кнопка «У кошик» |
+| Категорії | Перелік розділів магазину з кількістю товарів у кожному |
+| Сторінка категорії | Усі товари розділу з тими самими фільтрами, що й у каталозі |
+| Бренди | Перелік виробників з логотипами й країною |
+| Сторінка бренду | Опис виробника та всі його товари, які є в магазині |
+| Реєстрація / Вхід | Створення облікового запису та вхід |
+| Особистий кабінет | Дані про себе, зміна пароля, історія замовлень |
+| Кошик | Обрані товари, кількість, підсумкова сума, кнопка «Купити» |
+| Замовлення | Склад конкретного замовлення, його стан і сума |
+| Про нас | Контакти, графік роботи, доставка, повернення |
 
-```bash
-python manage.py createsuperuser
+### Сценарій покупки
+
+1. Відвідувач знаходить спінінг через пошук або в категорії «Вудилища».
+2. Відкриває сторінку товару, порівнює характеристики.
+3. Входить або реєструється.
+4. Додає спінінг і котушку в кошик, змінює кількість приманок.
+5. Натискає «Купити» — створюється замовлення зі станом «Нове», кошик очищується.
+6. У кабінеті бачить замовлення в історії; адміністратор згодом змінює його стан на «Відправлено» і «Виконано».
+
+---
+
+## 2. Загальні правила API
+
+### 2.1 Принципи проєктування
+
+API побудоване за рекомендаціями [restfulapi.net](https://restfulapi.net/rest-api-design-tutorial-with-example/) та [Stack Overflow Blog](https://stackoverflow.blog/2020/03/02/best-practices-for-rest-api-design/):
+
+| Принцип | Як застосовано |
+| --- | --- |
+| У шляхах лише іменники, дію задає HTTP-метод | `GET /products/`, а не `/getProducts/` |
+| Колекції у множині | `/products/`, `/brands/`, `/orders/` |
+| Два види URI: колекція та окремий ресурс | `/products/` і `/products/{slug}/` |
+| Логічне вкладення, не глибше 2 рівнів | `/brands/{slug}/products/` |
+| У колекції — короткі дані, в окремому ресурсі — повні | Картка товару в каталозі vs сторінка товару |
+| Кожен ресурс має посилання на себе | Поле `url` у кожному обʼєкті |
+| JSON для запитів і відповідей | `Content-Type: application/json; charset=utf-8` |
+| Фільтрація, сортування, пагінація через query-параметри | `?brand=shimano&sort=-price&page=2` |
+| Стандартні коди відповідей і зрозумілі помилки | Розділ 2.6 |
+| Версіонування в шляху | `/api/v1/` |
+| Безпека та мінімальні права | HTTPS, JWT, кожен бачить лише свої дані |
+| Кешування | `Cache-Control` для каталогу, категорій, брендів |
+
+### 2.2 Базові параметри
+
+| Параметр | Значення |
+| --- | --- |
+| Базовий URL | `https://api.kliuvannia.ua/api/v1` (локально `http://localhost:8000/api/v1`) |
+| Формат | JSON, UTF-8 |
+| Автентифікація | `Authorization: Bearer <access_token>` (JWT) |
+| Валюта | гривня (UAH), ціни — рядок з 2 знаками після коми: `"2450.00"` |
+| Дати | ISO 8601 в UTC: `"2026-10-13T20:40:00Z"` |
+| Ідентифікатори в URL | `slug` для товарів, категорій, брендів; числовий `id` для замовлень і позицій кошика |
+
+### 2.3 Позначення доступу
+
+| Позначка | Хто має доступ |
+| --- | --- |
+| 🌐 Публічний | Будь-хто, токен не потрібен |
+| 🔑 Користувач | Потрібен дійсний access-токен |
+| 🛠 Адмін | Токен користувача з `is_staff = true` |
+
+### 2.4 Пагінація
+
+Усі великі колекції повертаються сторінками. Параметри: `page` (від 1) і `page_size` (за замовчуванням 12, максимум 50).
+
+```json
+{
+  "count": 57,
+  "next": "https://api.kliuvannia.ua/api/v1/products/?page=3",
+  "previous": "https://api.kliuvannia.ua/api/v1/products/?page=1",
+  "results": [ ... ]
+}
 ```
 
-## Add your first application
+### 2.5 Сортування
 
-1. Create an app from the directory containing `manage.py` (replace `myapp`
-   with your application name):
+Параметр `sort` — одне або кілька полів через кому. Префікс `-` означає спадання, без префікса — зростання.
 
-   ```bash
-   python manage.py startapp myapp
-   ```
-
-2. Add its generated configuration class, `myapp.apps.MyappConfig`, to
-   `INSTALLED_APPS` in `config/settings.py`.
-3. Define your views and create `myapp/urls.py` with their URL patterns.
-4. Register that URLconf in `config/urls.py` using `path()` and `include()`,
-   choosing a URL prefix for the app and retaining the admin route.
-
-See the official Django 6.1 tutorial for
-[views and URL registration](https://docs.djangoproject.com/en/6.1/intro/tutorial01/)
-and [app registration and models](https://docs.djangoproject.com/en/6.1/intro/tutorial02/).
-
-## Git attributes
-
-Git detects text files automatically and normalizes them to LF. Checkouts use
-LF on Linux and Windows, while `.bat` and `.cmd` files use CRLF. Binary files
-are auto-detected and left unchanged, helping avoid newline-only diffs.
-
-
-## Code style and submission verification
-
-All submissions are required to adhere to PEP-8, Django best practices, and standard HTML/CSS/JS formatting. A deterministic cross-platform utility is provided to help you check and format your code.
-
-### 1. Verification (Check Mode)
-Before submitting, verify that all files adhere to the required standards:
-
-```bash
-python check_submission.py
+```
+GET /products/?sort=category,-price
 ```
 
-If all checks pass, you are ready to submit! If any checks fail, review the error output or run the auto-formatter below.
+### 2.6 Коди відповідей і помилки
 
-### 2. Auto-Formatting
-To automatically format Python files, fix safe PEP-8 rules, format Django HTML templates, and format CSS/JS static files:
+| Код | Значення | Приклад ситуації |
+| --- | --- | --- |
+| `200 OK` | Успішне читання або зміна | `GET`, `PUT`, `PATCH` |
+| `201 Created` | Ресурс створено; заголовок `Location` містить його URL | `POST /products/` |
+| `204 No Content` | Успіх без тіла відповіді | `DELETE` |
+| `400 Bad Request` | Дані не пройшли перевірку | Ціна ≤ 0, кошик порожній |
+| `401 Unauthorized` | Не передано токен або він прострочений | Запит до кошика без входу |
+| `403 Forbidden` | Токен є, але прав недостатньо | Покупець намагається видалити товар |
+| `404 Not Found` | Ресурс не існує або чужий | `GET /orders/999/` |
+| `405 Method Not Allowed` | Метод не підтримується | `DELETE /orders/5/` |
+| `409 Conflict` | Конфлікт зі станом даних | Email уже зареєстрований, видалення бренду з товарами |
+| `500 Internal Server Error` | Внутрішня помилка сервера | — |
 
-```bash
-python check_submission.py --format
+Єдиний формат помилки:
+
+```json
+{
+  "error": {
+    "code": "validation_error",
+    "message": "Дані не пройшли перевірку.",
+    "fields": {
+      "price": ["Ціна має бути більшою за 0."]
+    }
+  }
+}
 ```
 
-### 3. PyCharm Integration
-If you use PyCharm:
-- **One-Click Run:** In the top-right toolbar run configurations dropdown, select **"Verify Submission"** or **"Format Project"** and click the green **Play** button.
+Поле `fields` є лише для помилок перевірки. Повідомлення не розкривають внутрішніх деталей сервера.
 
-## Development only
+---
 
-The included settings use `DEBUG = True`, a development secret key, and a local
-SQLite database. The default mailer uses the console backend: email is printed
-to the process's console instead of being delivered.
+## 3. Ресурси та моделі даних
 
-This configuration and Django's development server are not suitable for
-production deployment.
+```
+Category 1 ──< Product >── 1 Brand
+                  │
+User 1 ── 1 Cart 1 ──< CartItem >── 1 Product
+User 1 ──< Order 1 ──< OrderItem >── 1 Product
+```
+
+Поля `id`, `url`, `created_at` формує сервер, у тілі запиту їх не передають.
+
+### 3.1 Category — категорія
+
+| Поле | Тип | Обовʼязкове | Опис |
+| --- | --- | --- | --- |
+| `id` | integer | авто | Ідентифікатор |
+| `name` | string(100) | так | Назва, унікальна («Вудилища») |
+| `slug` | string(100) | так | Для URL, унікальний (`vudylyshcha`) |
+| `description` | text | ні | Опис розділу |
+| `products_count` | integer | авто | Кількість товарів |
+
+### 3.2 Brand — бренд (виробник)
+
+| Поле | Тип | Обовʼязкове | Опис |
+| --- | --- | --- | --- |
+| `id` | integer | авто | Ідентифікатор |
+| `name` | string(100) | так | Назва, унікальна («Shimano») |
+| `slug` | string(100) | так | Для URL, унікальний |
+| `country` | string(60) | ні | Країна |
+| `description` | text | ні | Про виробника |
+| `logo` | image URL | ні | Логотип |
+| `products_count` | integer | авто | Кількість товарів |
+
+### 3.3 Product — товар
+
+| Поле | Тип | Обовʼязкове | Опис |
+| --- | --- | --- | --- |
+| `id` | integer | авто | Ідентифікатор |
+| `name` | string(200) | так | Назва |
+| `slug` | string(200) | так | Для URL, унікальний |
+| `sku` | string(30) | так | Артикул, унікальний |
+| `category` | FK → Category | так | У запиті — `category_id`, у відповіді — вкладений обʼєкт |
+| `brand` | FK → Brand | так | У запиті — `brand_id`, у відповіді — вкладений обʼєкт |
+| `price` | decimal(10,2) | так | Ціна, > 0 |
+| `stock` | integer | так | Залишок, ≥ 0 |
+| `description` | text | ні | Повний опис |
+| `specs` | object | ні | Характеристики «назва → значення» |
+| `image` | image URL | ні | Фото |
+| `in_stock` | boolean | авто | `stock > 0` |
+| `popularity` | integer | авто | Кількість проданих одиниць |
+| `created_at` | datetime | авто | Дата додавання |
+
+### 3.4 User — користувач
+
+| Поле | Тип | Обовʼязкове | Опис |
+| --- | --- | --- | --- |
+| `id` | integer | авто | Ідентифікатор |
+| `email` | email | так | Логін, унікальний, змінювати не можна |
+| `password` | string | так | ≥ 8 символів, лише для запису |
+| `first_name` | string(50) | так | Імʼя |
+| `last_name` | string(50) | ні | Прізвище |
+| `phone` | string(20) | ні | `+380XXXXXXXXX` |
+| `city` | string(60) | ні | Місто |
+| `is_staff` | boolean | авто | Чи є адміністратором |
+| `date_joined` | datetime | авто | Дата реєстрації |
+
+### 3.5 Cart, CartItem — кошик
+
+Один кошик на користувача, створюється автоматично.
+
+| Модель | Поле | Тип | Опис |
+| --- | --- | --- | --- |
+| Cart | `items` | CartItem[] | Позиції |
+| Cart | `total_price` | decimal | Сума всіх позицій |
+| CartItem | `id` | integer | Ідентифікатор позиції |
+| CartItem | `product` | FK → Product | Товар; один товар = одна позиція |
+| CartItem | `quantity` | integer | 1 … `stock` |
+| CartItem | `subtotal` | decimal | `price × quantity` |
+
+### 3.6 Order, OrderItem — замовлення
+
+Назва та ціна в позиції замовлення фіксуються в момент покупки.
+
+| Модель | Поле | Тип | Опис |
+| --- | --- | --- | --- |
+| Order | `id` | integer | Номер замовлення |
+| Order | `status` | enum | `new` → `processing` → `shipped` → `completed`, або `cancelled` |
+| Order | `total_price` | decimal | Сума |
+| Order | `created_at` | datetime | Дата |
+| OrderItem | `product` | FK → Product | Посилання на товар (може бути `null`, якщо товар видалено) |
+| OrderItem | `product_name` | string | Назва на момент покупки |
+| OrderItem | `price` | decimal | Ціна за одиницю на момент покупки |
+| OrderItem | `quantity` | integer | Кількість |
+
+---
+
+## 4. Автентифікація та користувачі
+
+Вхід видає JWT: `access` (30 хв) і `refresh` (7 днів).
+
+### `POST /users/` — реєстрація 🌐
+
+Реєстрація — це створення нового ресурсу в колекції `users`.
+
+**Запит:**
+
+```json
+{
+  "email": "ivan@example.com",
+  "password": "Strong_pass123",
+  "password_confirm": "Strong_pass123",
+  "first_name": "Іван",
+  "last_name": "Коваль"
+}
+```
+
+**Відповідь `201 Created`**, заголовок `Location: /api/v1/users/me/`:
+
+```json
+{
+  "id": 15,
+  "url": "/api/v1/users/me/",
+  "email": "ivan@example.com",
+  "first_name": "Іван",
+  "last_name": "Коваль"
+}
+```
+
+**Помилки:** `400` — паролі не збігаються, пароль закороткий; `409` — email уже зареєстрований.
+
+### `POST /auth/tokens/` — вхід 🌐
+
+Створює пару токенів.
+
+```json
+{ "email": "ivan@example.com", "password": "Strong_pass123" }
+```
+
+**Відповідь `201 Created`:**
+
+```json
+{
+  "access": "eyJhbGciOiJIUzI1NiIs...",
+  "refresh": "eyJhbGciOiJIUzI1NiIs..."
+}
+```
+
+**Помилки:** `401` — невірний email або пароль.
+
+### `POST /auth/tokens/refresh/` — новий access-токен 🌐
+
+```json
+{ "refresh": "eyJhbGciOiJIUzI1NiIs..." }
+```
+
+**Відповідь `200 OK`:** `{ "access": "eyJ..." }`. **Помилки:** `401` — refresh-токен недійсний.
+
+> `refresh` тут — загальноприйнята назва ресурсу в JWT (так названо і в `djangorestframework-simplejwt`), тому її залишено як виняток.
+
+### `POST /auth/tokens/blacklist/` — вихід 🔑
+
+Додає refresh-токен у чорний список, після чого ним не можна скористатись.
+
+```json
+{ "refresh": "eyJhbGciOiJIUzI1NiIs..." }
+```
+
+**Відповідь `204 No Content`.**
+
+### `GET /users/me/` — мій профіль 🔑
+
+`me` — псевдонім поточного користувача, тож ніхто не може звернутись до чужого профілю за `id`.
+
+```json
+{
+  "id": 15,
+  "url": "/api/v1/users/me/",
+  "email": "ivan@example.com",
+  "first_name": "Іван",
+  "last_name": "Коваль",
+  "phone": "+380671234567",
+  "city": "Полтава",
+  "date_joined": "2026-10-01T12:00:00Z"
+}
+```
+
+### `PATCH /users/me/` — змінити дані про себе 🔑
+
+Можна змінити `first_name`, `last_name`, `phone`, `city`.
+
+```json
+{ "phone": "+380509876543", "city": "Київ" }
+```
+
+**Відповідь `200 OK`** — оновлений профіль. **Помилки:** `400` — невірний формат телефону.
+
+### `PUT /users/me/password/` — змінити пароль 🔑
+
+```json
+{ "old_password": "Strong_pass123", "new_password": "Even_stronger456" }
+```
+
+**Відповідь `204 No Content`.** **Помилки:** `400` — старий пароль невірний або новий закороткий.
+
+---
+
+## 5. Товари
+
+### `GET /products/` — каталог 🌐
+
+Повертає короткі картки товарів. Усі параметри необовʼязкові й комбінуються.
+
+| Параметр | Приклад | Опис |
+| --- | --- | --- |
+| `search` | `catana` | Пошук за назвою товару та назвою бренду, без урахування регістру |
+| `category` | `vudylyshcha,kotushky` | Slug категорії, кілька через кому |
+| `brand` | `shimano,daiwa` | Slug бренду, кілька через кому |
+| `price_min` | `500` | Мінімальна ціна, грн |
+| `price_max` | `3000` | Максимальна ціна, грн |
+| `in_stock` | `true` | Лише товари в наявності |
+| `sort` | `-price` | Сортування (таблиця нижче) |
+| `page`, `page_size` | `2`, `12` | Пагінація |
+
+| Значення `sort` | Порядок |
+| --- | --- |
+| `price` | Від найдешевших |
+| `-price` | Від найдорожчих |
+| `-popularity` | Від найпопулярніших |
+| `name` | За назвою А–Я |
+| `category` | За категорією |
+| `-created_at` | Спочатку новинки (**за замовчуванням**) |
+
+**Приклад:** `GET /products/?search=shimano&category=vudylyshcha&sort=price`
+
+**Відповідь `200 OK`** (заголовок `Cache-Control: public, max-age=60`):
+
+```json
+{
+  "count": 1,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": 7,
+      "url": "/api/v1/products/spinning-shimano-catana-ex-240/",
+      "name": "Спінінг Shimano Catana EX 2.40 м",
+      "slug": "spinning-shimano-catana-ex-240",
+      "price": "2450.00",
+      "image": "https://api.kliuvannia.ua/media/products/catana.jpg",
+      "category": { "name": "Вудилища", "url": "/api/v1/categories/vudylyshcha/" },
+      "brand": { "name": "Shimano", "url": "/api/v1/brands/shimano/" },
+      "in_stock": true
+    }
+  ]
+}
+```
+
+**Помилки:** `400` — невідоме значення `sort` або `price_min > price_max`.
+
+### `GET /products/{slug}/` — сторінка товару 🌐
+
+**Відповідь `200 OK`** — усі поля:
+
+```json
+{
+  "id": 7,
+  "url": "/api/v1/products/spinning-shimano-catana-ex-240/",
+  "name": "Спінінг Shimano Catana EX 2.40 м",
+  "slug": "spinning-shimano-catana-ex-240",
+  "sku": "SH-CTEX-240ML",
+  "price": "2450.00",
+  "stock": 14,
+  "in_stock": true,
+  "category": { "id": 1, "name": "Вудилища", "slug": "vudylyshcha", "url": "/api/v1/categories/vudylyshcha/" },
+  "brand": { "id": 3, "name": "Shimano", "slug": "shimano", "url": "/api/v1/brands/shimano/" },
+  "description": "Легкий спінінг для ловлі на річках та озерах.",
+  "specs": {
+    "Довжина": "2.40 м",
+    "Тест": "7–28 г",
+    "Секцій": "2",
+    "Вага": "155 г",
+    "Матеріал": "Вуглеволокно"
+  },
+  "image": "https://api.kliuvannia.ua/media/products/catana.jpg",
+  "popularity": 38,
+  "created_at": "2026-09-02T10:00:00Z"
+}
+```
+
+**Помилки:** `404` — товару не існує.
+
+### `POST /products/` — додати товар 🛠
+
+JSON або `multipart/form-data`, якщо додається фото.
+
+```json
+{
+  "name": "Котушка Daiwa Ninja LT 2500",
+  "slug": "kotushka-daiwa-ninja-lt-2500",
+  "sku": "DW-NJLT-2500",
+  "category_id": 2,
+  "brand_id": 4,
+  "price": "1890.00",
+  "stock": 20,
+  "description": "Безінерційна котушка для спінінгу.",
+  "specs": { "Передавальне число": "5.3:1", "Підшипники": "5+1" }
+}
+```
+
+**Відповідь `201 Created`**, `Location: /api/v1/products/kotushka-daiwa-ninja-lt-2500/`, тіло — повний товар.
+**Помилки:** `400` — неіснуюча категорія чи бренд, ціна ≤ 0; `401`; `403`; `409` — `slug` або `sku` уже існує.
+
+### `PUT /products/{slug}/` — замінити товар 🛠
+
+Потрібні всі обовʼязкові поля, як у `POST`. **Відповідь `200 OK`.**
+
+### `PATCH /products/{slug}/` — частково змінити товар 🛠
+
+```json
+{ "price": "2290.00", "stock": 9 }
+```
+
+**Відповідь `200 OK`.** **Помилки:** `400`, `401`, `403`, `404`.
+
+### `DELETE /products/{slug}/` — видалити товар 🛠
+
+**Відповідь `204 No Content`.** Товар зникає з кошиків; у старих замовленнях лишаються збережені назва й ціна.
+**Помилки:** `401`, `403`, `404`.
+
+---
+
+## 6. Категорії
+
+| Метод | Ендпоінт | Опис | Доступ | Успіх |
+| --- | --- | --- | --- | --- |
+| GET | `/categories/` | Список категорій (без пагінації) | 🌐 | `200` |
+| GET | `/categories/{slug}/` | Дані категорії | 🌐 | `200` |
+| GET | `/categories/{slug}/products/` | Товари категорії | 🌐 | `200` |
+| POST | `/categories/` | Додати | 🛠 | `201` + `Location` |
+| PUT / PATCH | `/categories/{slug}/` | Змінити | 🛠 | `200` |
+| DELETE | `/categories/{slug}/` | Видалити | 🛠 | `204` |
+
+### `GET /categories/` 🌐
+
+```json
+[
+  { "id": 1, "url": "/api/v1/categories/vudylyshcha/", "name": "Вудилища", "slug": "vudylyshcha", "products_count": 24 },
+  { "id": 2, "url": "/api/v1/categories/kotushky/", "name": "Котушки", "slug": "kotushky", "products_count": 17 }
+]
+```
+
+### `GET /categories/{slug}/products/` 🌐
+
+Вторинна колекція товарів: той самий формат і ті самі параметри, що й у `GET /products/`, крім `category`.
+
+### `POST /categories/` 🛠
+
+```json
+{ "name": "Приманки", "slug": "prymanky", "description": "Воблери, блешні, силікон." }
+```
+
+**Помилки:** `404` — категорії не існує; `409` — назва або slug зайняті, або спроба видалити категорію, в якій є товари:
+
+```json
+{
+  "error": {
+    "code": "conflict",
+    "message": "Неможливо видалити категорію: до неї привʼязано 12 товарів."
+  }
+}
+```
+
+---
+
+## 7. Бренди
+
+| Метод | Ендпоінт | Опис | Доступ | Успіх |
+| --- | --- | --- | --- | --- |
+| GET | `/brands/` | Список брендів (пагінація, `search`) | 🌐 | `200` |
+| GET | `/brands/{slug}/` | Сторінка бренду | 🌐 | `200` |
+| GET | `/brands/{slug}/products/` | Усі товари бренду | 🌐 | `200` |
+| POST | `/brands/` | Додати | 🛠 | `201` + `Location` |
+| PUT / PATCH | `/brands/{slug}/` | Змінити | 🛠 | `200` |
+| DELETE | `/brands/{slug}/` | Видалити | 🛠 | `204` |
+
+### `GET /brands/{slug}/` 🌐
+
+```json
+{
+  "id": 3,
+  "url": "/api/v1/brands/shimano/",
+  "name": "Shimano",
+  "slug": "shimano",
+  "country": "Японія",
+  "description": "Виробник котушок, вудилищ і риболовного спорядження з 1921 року.",
+  "logo": "https://api.kliuvannia.ua/media/brands/shimano.png",
+  "products_count": 31,
+  "products_url": "/api/v1/brands/shimano/products/"
+}
+```
+
+### `GET /brands/{slug}/products/` 🌐
+
+Той самий формат і параметри, що й `GET /products/`, крім `brand`.
+
+### `POST /brands/` 🛠
+
+```json
+{ "name": "Salmo", "slug": "salmo", "country": "Латвія", "description": "Виробник воблерів." }
+```
+
+**Помилки:** `404`; `409` — назва/slug зайняті або в бренду є товари під час видалення.
+
+---
+
+## 8. Кошик
+
+Кошик — один на користувача, тому це **одиничний ресурс** `/cart/` без `id`. Користувач бачить лише свій кошик.
+
+| Метод | Ендпоінт | Тіло | Опис | Успіх |
+| --- | --- | --- | --- | --- |
+| GET | `/cart/` | — | Переглянути кошик | `200` |
+| POST | `/cart/items/` | `{ "product_id": 7, "quantity": 1 }` | Додати товар; якщо вже є — збільшити кількість | `201` |
+| PATCH | `/cart/items/{id}/` | `{ "quantity": 3 }` | Змінити кількість | `200` |
+| DELETE | `/cart/items/{id}/` | — | Прибрати позицію | `204` |
+| DELETE | `/cart/items/` | — | Очистити кошик | `204` |
+
+Усі ендпоінти — 🔑.
+
+### `GET /cart/` 🔑
+
+```json
+{
+  "items": [
+    {
+      "id": 11,
+      "url": "/api/v1/cart/items/11/",
+      "product": { "name": "Спінінг Shimano Catana EX 2.40 м", "price": "2450.00", "url": "/api/v1/products/spinning-shimano-catana-ex-240/" },
+      "quantity": 1,
+      "subtotal": "2450.00"
+    },
+    {
+      "id": 12,
+      "url": "/api/v1/cart/items/12/",
+      "product": { "name": "Воблер Salmo Hornet 4F", "price": "215.00", "url": "/api/v1/products/vobler-salmo-hornet-4f/" },
+      "quantity": 3,
+      "subtotal": "645.00"
+    }
+  ],
+  "total_price": "3095.00"
+}
+```
+
+**Помилки:** `400` — `quantity < 1`, більша за залишок («Доступно лише 14 шт.») або товару немає в наявності; `401`; `404` — товар чи позиція не знайдені.
+
+---
+
+## 9. Замовлення
+
+| Метод | Ендпоінт | Опис | Доступ | Успіх |
+| --- | --- | --- | --- | --- |
+| POST | `/orders/` | «Купити» — створити замовлення з кошика | 🔑 | `201` + `Location` |
+| GET | `/orders/` | Мої замовлення (історія) | 🔑 | `200` |
+| GET | `/orders/{id}/` | Деталі мого замовлення | 🔑 | `200` |
+| PATCH | `/orders/{id}/` | Змінити стан замовлення | 🛠 | `200` |
+
+Покупець бачить лише власні замовлення, адміністратор — усі.
+
+### `POST /orders/` — «Купити» 🔑
+
+Тіло запиту порожнє. В одній транзакції сервер:
+
+1. Перевіряє, що кошик не порожній і кожного товару достатньо.
+2. Створює замовлення зі станом `new` і фіксує назви та ціни.
+3. Зменшує залишок товарів і збільшує їхню популярність.
+4. Очищає кошик.
+
+**Відповідь `201 Created`**, `Location: /api/v1/orders/102/`:
+
+```json
+{
+  "id": 102,
+  "url": "/api/v1/orders/102/",
+  "status": "new",
+  "created_at": "2026-10-13T20:40:00Z",
+  "items": [
+    { "product_name": "Спінінг Shimano Catana EX 2.40 м", "price": "2450.00", "quantity": 1, "product_url": "/api/v1/products/spinning-shimano-catana-ex-240/" },
+    { "product_name": "Воблер Salmo Hornet 4F", "price": "215.00", "quantity": 3, "product_url": "/api/v1/products/vobler-salmo-hornet-4f/" }
+  ],
+  "total_price": "3095.00"
+}
+```
+
+**Помилки:** `400` — кошик порожній або недостатньо товару («Воблер Salmo Hornet 4F: доступно 2»); `401`.
+
+### `GET /orders/` — історія 🔑
+
+Новіші спочатку, з пагінацією. Параметри: `status` (напр. `completed`), `sort` (`created_at`, `-created_at`, `total_price`, `-total_price`).
+
+```json
+{
+  "count": 3,
+  "next": null,
+  "previous": null,
+  "results": [
+    { "id": 102, "url": "/api/v1/orders/102/", "status": "new", "total_price": "3095.00", "items_count": 2, "created_at": "2026-10-13T20:40:00Z" }
+  ]
+}
+```
+
+### `GET /orders/{id}/` 🔑
+
+Повне замовлення, як у відповіді `POST /orders/`. **Помилки:** `404` — не існує або належить іншому користувачу.
+
+### `PATCH /orders/{id}/` 🛠
+
+```json
+{ "status": "shipped" }
+```
+
+**Відповідь `200 OK`.** **Помилки:** `400` — неприпустимий стан; `403`; `404`.
+
+---
+
+## 10. Інформація про магазин
+
+### `GET /shop-info/` 🌐
+
+Дані для сторінки «Про нас». Адміністратор редагує їх через панель адміністратора.
+Заголовок `Cache-Control: public, max-age=3600`.
+
+```json
+{
+  "name": "Клювання",
+  "description": "Інтернет-магазин спорядження для риболовлі.",
+  "contacts": {
+    "phone": "+380500000000",
+    "email": "support@kliuvannia.ua",
+    "address": "м. Полтава, вул. Соборності, 1",
+    "working_hours": "Пн–Сб 09:00–19:00"
+  },
+  "delivery": "Нова пошта та Укрпошта по всій Україні, 1–3 дні. Безкоштовно від 2000 грн.",
+  "returns": "Повернення протягом 14 днів, якщо товар не використовувався і збережена упаковка."
+}
+```
+
+---
+
+## 11. Зведена таблиця ендпоінтів
+
+Шляхи — відносно `/api/v1`.
+
+| Ресурс | Метод | Ендпоінт | Опис | Доступ |
+| --- | --- | --- | --- | --- |
+| Користувачі | POST | `/users/` | Реєстрація | 🌐 |
+| Токени | POST | `/auth/tokens/` | Вхід | 🌐 |
+| Токени | POST | `/auth/tokens/refresh/` | Новий access-токен | 🌐 |
+| Токени | POST | `/auth/tokens/blacklist/` | Вихід | 🔑 |
+| Профіль | GET | `/users/me/` | Мій профіль | 🔑 |
+| Профіль | PATCH | `/users/me/` | Змінити дані | 🔑 |
+| Профіль | PUT | `/users/me/password/` | Змінити пароль | 🔑 |
+| Товари | GET | `/products/` | Каталог: пошук, фільтри, сортування | 🌐 |
+| Товари | GET | `/products/{slug}/` | Сторінка товару | 🌐 |
+| Товари | POST | `/products/` | Додати товар | 🛠 |
+| Товари | PUT / PATCH | `/products/{slug}/` | Змінити товар | 🛠 |
+| Товари | DELETE | `/products/{slug}/` | Видалити товар | 🛠 |
+| Категорії | GET | `/categories/` | Список категорій | 🌐 |
+| Категорії | GET | `/categories/{slug}/` | Дані категорії | 🌐 |
+| Категорії | GET | `/categories/{slug}/products/` | Товари категорії | 🌐 |
+| Категорії | POST | `/categories/` | Додати категорію | 🛠 |
+| Категорії | PUT / PATCH | `/categories/{slug}/` | Змінити категорію | 🛠 |
+| Категорії | DELETE | `/categories/{slug}/` | Видалити категорію | 🛠 |
+| Бренди | GET | `/brands/` | Список брендів | 🌐 |
+| Бренди | GET | `/brands/{slug}/` | Сторінка бренду | 🌐 |
+| Бренди | GET | `/brands/{slug}/products/` | Товари бренду | 🌐 |
+| Бренди | POST | `/brands/` | Додати бренд | 🛠 |
+| Бренди | PUT / PATCH | `/brands/{slug}/` | Змінити бренд | 🛠 |
+| Бренди | DELETE | `/brands/{slug}/` | Видалити бренд | 🛠 |
+| Кошик | GET | `/cart/` | Переглянути кошик | 🔑 |
+| Кошик | POST | `/cart/items/` | Додати товар | 🔑 |
+| Кошик | PATCH | `/cart/items/{id}/` | Змінити кількість | 🔑 |
+| Кошик | DELETE | `/cart/items/{id}/` | Прибрати позицію | 🔑 |
+| Кошик | DELETE | `/cart/items/` | Очистити кошик | 🔑 |
+| Замовлення | POST | `/orders/` | «Купити» | 🔑 |
+| Замовлення | GET | `/orders/` | Історія замовлень | 🔑 |
+| Замовлення | GET | `/orders/{id}/` | Деталі замовлення | 🔑 |
+| Замовлення | PATCH | `/orders/{id}/` | Змінити стан | 🛠 |
+| Магазин | GET | `/shop-info/` | Сторінка «Про нас» | 🌐 |
+
+### Технології реалізації (план)
+
+Django + Django REST Framework, `ModelViewSet` з `lookup_field = "slug"`, `django-filter` + `SearchFilter` + `OrderingFilter` (`ordering_param = "sort"`), `djangorestframework-simplejwt` з blacklist, права `AllowAny` / `IsAuthenticated` / `IsAdminUser`.
+
+## Джерела
+
+- [How to Design a REST API — restfulapi.net](https://restfulapi.net/rest-api-design-tutorial-with-example/)
+- [Best practices for REST API design — Stack Overflow Blog](https://stackoverflow.blog/2020/03/02/best-practices-for-rest-api-design/)
