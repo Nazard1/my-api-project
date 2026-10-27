@@ -11,4 +11,10 @@ urlpatterns = [
     ),
     path("brands/", views.BrandListView.as_view(), name="brand-list"),
     path("brands/<int:pk>/", views.BrandDetailView.as_view(), name="brand-detail"),
+    path("products/", views.ProductListView.as_view(), name="product-list"),
+    path(
+        "products/<int:pk>/",
+        views.ProductDetailView.as_view(),
+        name="product-detail",
+    ),
 ]

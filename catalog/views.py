@@ -4,8 +4,8 @@ from rest_framework.views import APIView
 
 from config.exceptions import Conflict, get_object_or_404_api
 
-from .models import Brand, Category
-from .serializers import BrandSerializer, CategorySerializer
+from .models import Brand, Category, Product
+from .serializers import BrandSerializer, CategorySerializer, ProductSerializer
 
 
 class BrandListView(APIView):
@@ -83,4 +83,36 @@ class CategoryDetailView(APIView):
                 "Спочатку видаліть ці товари або перенесіть їх в іншу категорію."
             )
         category.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ProductListView(APIView):
+    def get(self, request):
+        products = Product.objects.select_related("category", "brand")
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = ProductSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class ProductDetailView(APIView):
+    def get(self, request, pk):
+        product = get_object_or_404_api(Product, pk, "Товар")
+        serializer = ProductSerializer(product)
+        return Response(serializer.data)
+
+    def patch(self, request, pk):
+        product = get_object_or_404_api(Product, pk, "Товар")
+        serializer = ProductSerializer(product, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def delete(self, request, pk):
+        product = get_object_or_404_api(Product, pk, "Товар")
+        product.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
