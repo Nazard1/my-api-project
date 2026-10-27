@@ -9,4 +9,6 @@ urlpatterns = [
         views.CategoryDetailView.as_view(),
         name="category-detail",
     ),
+    path("brands/", views.BrandListView.as_view(), name="brand-list"),
+    path("brands/<int:pk>/", views.BrandDetailView.as_view(), name="brand-detail"),
 ]
