@@ -41,6 +41,10 @@ CORS_ALLOWED_ORIGINS = os.getenv(
     "CORS_ALLOWED_ORIGINS", "http://localhost:5500,http://127.0.0.1:5500"
 ).split(",")
 
+REST_FRAMEWORK = {
+    "EXCEPTION_HANDLER": "config.exceptions.custom_exception_handler",
+}
+
 
 # Application definition
 
