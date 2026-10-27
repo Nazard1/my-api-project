@@ -262,7 +262,14 @@ python manage.py runserver
 | Бекенд | http://127.0.0.1:8000 |
 | API | http://127.0.0.1:8000/api/v1/ |
 | Адмінка | http://127.0.0.1:8000/admin/ |
-| Фронтенд | http://127.0.0.1:5500 — окремий репозиторій: _посилання буде додано_ |
+| Фронтенд | http://127.0.0.1:5500 — окремий репозиторій: [Nazard1/my-api-frontend](https://github.com/Nazard1/my-api-frontend) |
+
+Щоб побачити сайт повністю, запустіть обидві частини у двох терміналах:
+
+1. **Термінал 1 — бекенд** (у папці `my-api-project`, з активованим `.venv`): `python manage.py runserver`.
+2. **Термінал 2 — фронтенд** (у папці [`my-api-frontend`](https://github.com/Nazard1/my-api-frontend)): `python -m http.server 5500 --bind 127.0.0.1`, потім відкрийте http://127.0.0.1:5500.
+
+Адреса фронтенду має бути в `CORS_ALLOWED_ORIGINS` у `.env` (за замовчуванням там уже є `http://127.0.0.1:5500` і `http://localhost:5500`).
 
 ---
 
