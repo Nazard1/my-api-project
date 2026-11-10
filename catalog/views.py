@@ -1,4 +1,5 @@
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -9,6 +10,8 @@ from .serializers import BrandSerializer, CategorySerializer, ProductSerializer
 
 
 class BrandListView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request):
         brands = Brand.objects.all()
         serializer = BrandSerializer(brands, many=True)
@@ -22,6 +25,8 @@ class BrandListView(APIView):
 
 
 class CategoryListView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request):
         categories = Category.objects.all()
         serializer = CategorySerializer(categories, many=True)
@@ -35,6 +40,8 @@ class CategoryListView(APIView):
 
 
 class BrandDetailView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request, pk):
         brand = get_object_or_404_api(Brand, pk, "Бренд")
         serializer = BrandSerializer(brand)
@@ -61,6 +68,8 @@ class BrandDetailView(APIView):
 
 
 class CategoryDetailView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request, pk):
         category = get_object_or_404_api(Category, pk, "Категорію")
         serializer = CategorySerializer(category)
@@ -87,6 +96,8 @@ class CategoryDetailView(APIView):
 
 
 class ProductListView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request):
         products = Product.objects.select_related("category", "brand")
         serializer = ProductSerializer(products, many=True)
@@ -100,6 +111,8 @@ class ProductListView(APIView):
 
 
 class ProductDetailView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request, pk):
         product = get_object_or_404_api(Product, pk, "Товар")
         serializer = ProductSerializer(product)
