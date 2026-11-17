@@ -31,3 +31,25 @@ indent = 2
 format_css = true
 format_js = true
 ignore = "H006,H031"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "*/migrations/*",
+    "tests/*",
+    ".venv/*",
+    "venv/*",
+    "manage.py",
+    "check_submission.py",
+    "config/asgi.py",
+    "config/wsgi.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true

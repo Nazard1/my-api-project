@@ -1,3 +1,5 @@
+import logging
+
 from rest_framework import status
 from rest_framework.exceptions import (
     APIException,
@@ -9,6 +11,8 @@ from rest_framework.exceptions import (
 )
 from rest_framework.views import exception_handler
 from rest_framework_simplejwt.exceptions import InvalidToken
+
+logger = logging.getLogger(__name__)
 
 MSG_NOT_AUTHENTICATED = (
     "Потрібна авторизація. Передайте access-токен у заголовку "
@@ -60,6 +64,7 @@ def custom_exception_handler(exc, context):
     else:
         message = str(response.data.get("detail", "Помилка запиту."))
 
+    _log_api_error(context.get("request"), response.status_code, message, details)
     response.data = {
         "error": {
             "status": response.status_code,
@@ -68,3 +73,24 @@ def custom_exception_handler(exc, context):
         }
     }
     return response
+
+
+def _log_api_error(request, status_code, message, details):
+    if request is None:
+        return
+    user = request.user if hasattr(request, "_user") else None
+    who = f"user_id={user.pk}" if user and user.is_authenticated else "anonymous"
+    if details:
+        reason = f"invalid fields: {', '.join(sorted(details))}"
+    else:
+        reason = message
+    level = logging.ERROR if status_code >= 500 else logging.WARNING
+    logger.log(
+        level,
+        "%s %s -> %s (%s): %s",
+        request.method,
+        request.path,
+        status_code,
+        who,
+        reason,
+    )
