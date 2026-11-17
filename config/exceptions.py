@@ -1,4 +1,5 @@
 import logging
+
 from rest_framework import status
 from rest_framework.exceptions import (
     APIException,
@@ -72,6 +73,7 @@ def custom_exception_handler(exc, context):
         }
     }
     return response
+
 
 def _log_api_error(request, status_code, message, details):
     if request is None:

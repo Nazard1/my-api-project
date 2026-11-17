@@ -70,7 +70,10 @@ BRAND_CONFLICT = (
 
 
 def _user(request):
-    return f"user_id={request.user.pk}" if request.user.is_authenticated else "anonymous"
+    return (
+        f"user_id={request.user.pk}" if request.user.is_authenticated else "anonymous"
+    )
+
 
 @extend_schema(tags=["Бренди"])
 class BrandListView(APIView):
@@ -157,7 +160,9 @@ class BrandDetailView(APIView):
         "Потрібен access-токен.",
         request=BrandSerializer(partial=True),
         examples=[
-            OpenApiExample("Змінити країну", value={"country": "Японія"}, request_only=True)
+            OpenApiExample(
+                "Змінити країну", value={"country": "Японія"}, request_only=True
+            )
         ],
         responses={
             200: BrandSerializer,
@@ -294,7 +299,7 @@ class ProductListView(APIView):
                 {
                     "price": ["Переконайтесь, що значення більше або дорівнює 0.01."],
                     "category": [
-                        "Недопустимий первинний ключ \"999\" - об'єкт не існує."
+                        'Недопустимий первинний ключ "999" - об\'єкт не існує.'
                     ],
                 }
             ),

@@ -7,6 +7,7 @@ from .exceptions import (
     MSG_NOT_AUTHENTICATED,
 )
 
+
 class ErrorBodySerializer(serializers.Serializer):
     status = serializers.IntegerField(help_text="HTTP-статус відповіді.")
     message = serializers.CharField(help_text="Зрозуміле людині пояснення помилки.")
@@ -19,7 +20,6 @@ class ErrorBodySerializer(serializers.Serializer):
 
 
 class ErrorSerializer(serializers.Serializer):
-
     error = ErrorBodySerializer()
 
 

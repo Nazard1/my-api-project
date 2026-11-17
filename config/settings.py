@@ -14,14 +14,15 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-from dotenv import load_dotenv
 from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Read local secrets from .env (not committed); see .env.example.
 load_dotenv(BASE_DIR / ".env")
+
 
 def env_required(name):
     value = os.getenv(name)
@@ -88,10 +89,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "corsheaders",
-     "drf_spectacular",
+    "drf_spectacular",
     "catalog.apps.CatalogConfig",
     "accounts.apps.AccountsConfig",
-    
 ]
 
 MIDDLEWARE = [
