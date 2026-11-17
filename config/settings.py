@@ -51,6 +51,7 @@ CORS_ALLOWED_ORIGINS = os.getenv(
 
 REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "config.exceptions.custom_exception_handler",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
@@ -59,6 +60,20 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "«Клювання» API",
+    "DESCRIPTION": (
+        "REST API інтернет-магазину риболовних товарів: каталог (категорії, "
+        "бренди, товари) та автентифікація через JWT.\n\n"
+        "Читання каталогу доступне всім. Створення, зміна й видалення — лише "
+        "з access-токеном: отримайте його в `POST /api/v1/auth/login/`, "
+        "натисніть **Authorize** і вставте токен (без слова Bearer)."
+    ),
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
 }
 
 
@@ -73,8 +88,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "corsheaders",
+     "drf_spectacular",
     "catalog.apps.CatalogConfig",
     "accounts.apps.AccountsConfig",
+    
 ]
 
 MIDDLEWARE = [
@@ -162,5 +179,34 @@ STATIC_URL = "static/"
 MAILERS = {
     "default": {
         "BACKEND": "django.core.mail.backends.console.EmailBackend",
+    },
+}
+
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} [{levelname}] {name}: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",
+    },
+    "loggers": {
+        "django.request": {"level": "ERROR"},
+        "catalog": {"level": LOG_LEVEL},
+        "accounts": {"level": LOG_LEVEL},
+        "config": {"level": LOG_LEVEL},
     },
 }
